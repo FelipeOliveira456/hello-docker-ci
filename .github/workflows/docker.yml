@@ -1,0 +1,31 @@
+name: docker
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login no registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Build, conferir e publicar
+        run: |
+          set -euo pipefail
+          user=$(echo '${{ secrets.REGISTRY_USERNAME }}' | tr '[:upper:]' '[:lower:]')
+          tag=$(tr -d '[:space:]' < VERSION)
+          imagem="ghcr.io/${user}/hello-app:${tag}"
+          echo "Imagem: ${imagem}"
+          docker build -t "${imagem}" .
+          docker image inspect "${imagem}" >/dev/null
+          echo "imagem criada: ${imagem}"
+          docker push "${imagem}"
